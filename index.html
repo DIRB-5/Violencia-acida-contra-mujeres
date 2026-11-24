@@ -77,6 +77,9 @@
 
   figure{margin:36px 0}
   figure img{width:100%;height:auto;border-radius:4px;box-shadow:0 10px 30px rgba(80,30,25,.18)}
+  /* Parallax: la figura recorta y la imagen (ampliada) se desplaza con el scroll */
+  .parallax figure{overflow:hidden;border-radius:4px;box-shadow:0 10px 30px rgba(80,30,25,.18)}
+  .parallax figure img{border-radius:0;box-shadow:none;transform:translate3d(0,var(--py,0px),0) scale(1.18);will-change:transform}
   .creditos{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;font-size:.85rem;font-weight:600;color:var(--tinta)}
   .creditos b{font-family:var(--titular);font-weight:700;color:var(--vino);margin-right:6px;letter-spacing:.02em}
 
@@ -393,6 +396,28 @@
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll);
   onScroll();
+
+  // Parallax de imágenes (se desactiva si la persona pidió reducir el movimiento)
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    document.documentElement.classList.add('parallax');
+    var figs=Array.prototype.slice.call(document.querySelectorAll('main figure'));
+    var ticking=false, RANGO=0.08; // desplazamiento máximo: 8% del alto de la imagen hacia cada lado
+    function parallax(){
+      ticking=false;
+      var vh=window.innerHeight;
+      figs.forEach(function(f){
+        var r=f.getBoundingClientRect();
+        if(r.bottom<0||r.top>vh) return;
+        var p=(r.top+r.height/2-vh/2)/(vh/2+r.height/2); // -1 arriba … 1 abajo
+        p=Math.max(-1,Math.min(1,p));
+        f.firstElementChild.style.setProperty('--py',(p*RANGO*r.height).toFixed(1)+'px');
+      });
+    }
+    function pedir(){ if(!ticking){ticking=true;requestAnimationFrame(parallax);} }
+    window.addEventListener('scroll',pedir,{passive:true});
+    window.addEventListener('resize',pedir);
+    parallax();
+  }
 
   up.addEventListener('click',function(){window.scrollTo({top:0});});
 })();
